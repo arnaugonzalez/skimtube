@@ -31,11 +31,18 @@ mkdir kb && cd kb && yt-collector init         # writes config.env, channels.txt
 YTC_LLM_API_KEY=sk-or-... YTC_LLM_MODEL=deepseek/deepseek-chat yt-collector run
 ```
 
-`init` points to OpenRouter by default. For a fully local setup, use Ollama instead:
+`init` points to OpenRouter by default. For a fully local setup, use Ollama instead. Ollama
+serves 4,096 tokens of context by default and **silently cuts longer prompts**, so a normal
+transcript loses most of its text without any error. Create a model with a larger context first:
 
 ```bash
-YTC_LLM_BASE_URL=http://localhost:11434/v1 YTC_LLM_MODEL=llama3.1 yt-collector run
+printf 'FROM qwen2.5:3b\nPARAMETER num_ctx 16384\n' > Modelfile
+ollama create qwen2.5-16k -f Modelfile
+YTC_LLM_BASE_URL=http://localhost:11434/v1 YTC_LLM_MODEL=qwen2.5-16k yt-collector run
 ```
+
+(Or start the server with `OLLAMA_CONTEXT_LENGTH=16384`.) On a laptop CPU without a GPU, a 3B
+model takes about 4 minutes per note; that is fine for a scheduled job, slow for a first try.
 
 The first run only looks back 24 hours (`YTC_LOOKBACK_HOURS`). After that, every run processes
 whatever is new since the previous one. Then:
