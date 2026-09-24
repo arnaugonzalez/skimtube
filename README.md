@@ -7,7 +7,7 @@ base for you and your agents.
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
 
-<!-- demo.gif: one generated note, then a digest with a contradictions section (≤20 s) -->
+![A generated note, then the contradictions section of a digest](docs/demo.gif)
 
 Every few hours it checks the channels you list, grabs the subtitles of new videos, and has an
 LLM write one structured note per video. Once a day it merges the recent notes into a digest,
