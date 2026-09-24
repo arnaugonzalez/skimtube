@@ -39,7 +39,7 @@ def test_previous_digests_and_foreign_files_are_not_reingested(workdir):
     (out / "digests").mkdir()
     (out / "digests" / "2026-09-20.md").write_text("# Digest — 2026-09-20\n\nCLAIM-CLOSED\n")
     (out / "2026-09" / "handwritten.md").write_text("---\ntitle: mine\n---\nCLAIM-CLOSED\n")
-    notes = digest.recent_notes(out, NOW.replace(day=20), 10)
+    notes = digest.recent_notes(out, NOW.replace(day=20), NOW, 10)
     assert [n["url"] for n in notes] == ["https://www.youtube.com/watch?v=v1"]
 
 
@@ -48,8 +48,16 @@ def test_window_and_cap(workdir):
     make_note(out, "old", "old", "x", collected=NOW.replace(day=1))
     for i in range(3):
         make_note(out, f"n{i}", f"note {i}", "x", collected=NOW.replace(hour=i))
-    assert len(digest.recent_notes(out, NOW.replace(day=20), 10)) == 3
-    assert len(digest.recent_notes(out, NOW.replace(day=20), 2)) == 2
+    assert len(digest.recent_notes(out, NOW.replace(day=20), NOW, 10)) == 3
+    assert len(digest.recent_notes(out, NOW.replace(day=20), NOW, 2)) == 2
+
+
+def test_notes_after_now_are_excluded(workdir):
+    out = workdir / "knowledge-feed"
+    make_note(out, "v1", "before", "x", collected=NOW.replace(hour=1))
+    make_note(out, "v2", "after", "x", collected=NOW.replace(day=22))
+    notes = digest.recent_notes(out, NOW.replace(day=20), NOW, 10)
+    assert [n["title"] for n in notes] == ["before"]
 
 
 def test_empty_window_is_not_an_error(workdir):

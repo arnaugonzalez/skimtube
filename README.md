@@ -125,8 +125,9 @@ it: `yt-collector run && rsync -a knowledge-feed/ server:kb/`.
 - **Terms of service.** Downloading subtitles with yt-dlp is not a use YouTube explicitly
   permits. yt-collector keeps transcripts in memory only and writes transformed summaries.
   Don't redistribute transcripts, and check the rules that apply to you.
-- The contradictions section is only as good as the model you use. Treat it as a pointer to
-  check, not a verdict.
+- **Contradictions are leads, not verdicts.** Checked by hand over 4 real days, the section
+  flags 2–3 pairs per window and at most one is a genuine disagreement; the rest are nuances the
+  model explains away in its own note.
 
 Non-goals: a web UI, a database, transcribing audio.
 

@@ -31,9 +31,9 @@ def front_matter(md: str) -> dict[str, str]:
     return fm
 
 
-def recent_notes(out: Path, since: datetime, cap: int) -> list[dict]:
-    """Only note folders (YYYY-MM / undated) and only files this tool wrote,
-    so previous digests never feed back into a new one."""
+def recent_notes(out: Path, since: datetime, until: datetime, cap: int) -> list[dict]:
+    """Notes collected in [since, until], only from note folders (YYYY-MM / undated) and only
+    files this tool wrote, so previous digests never feed back into a new one."""
     notes = []
     for folder in out.iterdir() if out.exists() else []:
         if not (folder.is_dir() and NOTE_DIR_RE.match(folder.name)):
@@ -47,7 +47,7 @@ def recent_notes(out: Path, since: datetime, cap: int) -> list[dict]:
                 dt = datetime.fromisoformat(fm.get("collected", "").replace("Z", "+00:00"))
             except ValueError:
                 continue
-            if dt < since:
+            if not since <= dt <= until:
                 continue
             notes.append({
                 "dt": dt,
@@ -78,7 +78,7 @@ def run(cfg: Config, window_hours: float, max_notes: int, now: datetime | None =
     now = now or datetime.now(timezone.utc)
     check_llm(cfg)
     out = cfg.path("YTC_OUT")
-    notes = recent_notes(out, now - timedelta(hours=window_hours), max_notes)
+    notes = recent_notes(out, now - timedelta(hours=window_hours), now, max_notes)
     if not notes:
         log(f"digest: no notes in the last {window_hours:g}h, nothing to do")
         return 0
