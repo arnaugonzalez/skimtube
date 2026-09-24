@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+ <title>Example Channel</title>
+ <entry>
+  <yt:videoId>vidAI000001</yt:videoId>
+  <title>New open LLM beats GPT on reasoning</title>
+  <published>2026-09-20T10:00:00+00:00</published>
+  <media:group><media:description>We benchmark the new model on agents and RAG.</media:description></media:group>
+ </entry>
+ <entry>
+  <yt:videoId>vidCOOK0002</yt:videoId>
+  <title>Perfect sourdough bread</title>
+  <published>2026-09-20T09:00:00+00:00</published>
+  <media:group><media:description>Baking with a long cold ferment.</media:description></media:group>
+ </entry>
+ <entry>
+  <yt:videoId>vidOLD000003</yt:videoId>
+  <title>Old AI video from last year</title>
+  <published>2025-09-01T09:00:00+00:00</published>
+  <media:group><media:description>An AI retrospective.</media:description></media:group>
+ </entry>
+ <entry>
+  <title>Entry without a video id is ignored</title>
+ </entry>
+</feed>

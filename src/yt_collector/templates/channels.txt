@@ -1,0 +1,11 @@
+# One channel per line: @handle, channel id (UC...), or channel URL.
+# Lines starting with # are ignored. This starter list follows AI/ML channels;
+# replace it with whatever you never have time to watch.
+
+@AndrejKarpathy
+@YannicKilcher
+@TwoMinutePapers
+@AIExplained-official
+@samwitteveenai
+@LangChain
+@Fireship

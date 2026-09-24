@@ -1,0 +1,2 @@
+# Channels to always skip, even if they come from your subscriptions.
+# Same format as channels.txt.

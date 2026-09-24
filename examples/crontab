@@ -1,0 +1,5 @@
+# crontab -e   — collect every 6 hours, digest once a day at 20:00.
+# cron has a minimal environment: set the key here or in config.env.
+YTC_LLM_API_KEY=sk-...
+0 */6 * * *  cd $HOME/kb && $HOME/.local/bin/yt-collector run    >> run.log 2>&1
+0 20 * * *   cd $HOME/kb && $HOME/.local/bin/yt-collector digest >> run.log 2>&1

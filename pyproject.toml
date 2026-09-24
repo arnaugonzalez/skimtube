@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "yt-collector"
+version = "0.1.0"
+description = "Turn the YouTube channels you never have time to watch into a searchable Markdown knowledge base for you and your agents."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "Arnau González" }]
+keywords = ["youtube", "llm", "rss", "markdown", "knowledge-base", "obsidian", "ollama"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Topic :: Text Processing :: Markup :: Markdown",
+]
+dependencies = ["yt-dlp>=2024.12.13"]
+
+[project.urls]
+Homepage = "https://github.com/arnaugonzalez/yt-collector"
+Issues = "https://github.com/arnaugonzalez/yt-collector/issues"
+
+[project.scripts]
+yt-collector = "yt_collector.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff.lint.per-file-ignores]
+"src/yt_collector/prompts.py" = ["E501"]

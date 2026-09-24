@@ -1,0 +1,25 @@
+# .github/workflows/knowledge-feed.yml in a PRIVATE repo that stores your knowledge base.
+# Needs the secret YTC_LLM_API_KEY. Commit config.env and channels.txt to that repo
+# (without the key) together with state.json so runs stay idempotent.
+#
+# Caveat: YouTube often answers GitHub-hosted runners (datacenter IPs) with a bot check
+# when downloading subtitles. If notes stop appearing, run it on a home machine instead.
+name: knowledge-feed
+on:
+  schedule: [{ cron: "15 */6 * * *" }]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uvx yt-collector run
+        env:
+          YTC_LLM_API_KEY: ${{ secrets.YTC_LLM_API_KEY }}
+      - run: |
+          git config user.name "yt-collector" && git config user.email "actions@users.noreply.github.com"
+          git add knowledge-feed state.json && git commit -m "knowledge-feed: $(date -u +%F)" || true
+          git push
