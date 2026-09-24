@@ -24,7 +24,7 @@ DEFAULTS: dict[str, str] = {
     "YTC_LLM_MODEL": "",
     "YTC_LLM_COMMAND": "",
     "YTC_LLM_TIMEOUT": "300",
-    "YTC_YTDLP_BIN": "yt-dlp",
+    "YTC_YTDLP_BIN": "",
 }
 
 INT_KEYS = ("YTC_MAX_PER_RUN", "YTC_MAX_TRANSCRIPT_CHARS", "YTC_LLM_TIMEOUT")

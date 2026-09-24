@@ -5,6 +5,7 @@ import html
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import urllib.request
 from pathlib import Path
@@ -111,22 +112,26 @@ def vtt_to_text(vtt: str) -> str:
     return " ".join(lines)
 
 
-def ytdlp_bin(cfg: Config) -> str:
+def ytdlp_cmd(cfg: Config) -> list[str]:
+    """yt-dlp is a dependency, so by default run the copy installed next to this package:
+    pipx/uv tool installs do not put dependency scripts on PATH."""
+    if not cfg["YTC_YTDLP_BIN"]:
+        return [sys.executable, "-m", "yt_dlp"]
     found = shutil.which(cfg["YTC_YTDLP_BIN"])
     if not found:
         raise FileNotFoundError(f"yt-dlp not found ({cfg['YTC_YTDLP_BIN']!r}); "
-                                "install it or set YTC_YTDLP_BIN")
-    return found
+                                "fix YTC_YTDLP_BIN or leave it empty to use the bundled one")
+    return [found]
 
 
 def transcript(cfg: Config, video_url: str) -> str:
     """Subtitles tried one language at a time: requesting several at once lets a 429
     on an auto-translated track abort all of them."""
-    binary = ytdlp_bin(cfg)
+    base = ytdlp_cmd(cfg)
     cap = cfg.int("YTC_MAX_TRANSCRIPT_CHARS")
     for lang in cfg.list("YTC_SUB_LANGS"):
         with tempfile.TemporaryDirectory() as td:
-            cmd = [binary, "--skip-download", "--no-warnings",
+            cmd = [*base, "--skip-download", "--no-warnings",
                    "--write-subs", "--write-auto-subs", "--sub-langs", lang,
                    "--sub-format", "vtt", "--convert-subs", "vtt",
                    "--retries", "3", "--retry-sleep", "5",

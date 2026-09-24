@@ -102,6 +102,7 @@ Values come from `config.env` in the working directory (or `-C DIR`), else
 | `YTC_LOOKBACK_HOURS` | `24` | first run only |
 | `YTC_MAX_PER_RUN` | `25` | the rest wait for the next run |
 | `YTC_MAX_TRANSCRIPT_CHARS` | `48000` | transcript truncation |
+| `YTC_YTDLP_BIN` | empty = the bundled yt-dlp | set to use another yt-dlp binary |
 
 **Your subscriptions (optional).** `yt-collector auth` runs a one-time OAuth consent (read-only
 scope) and from then on merges the channels you are subscribed to. It needs your own Google

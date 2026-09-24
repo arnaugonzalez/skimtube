@@ -1,6 +1,10 @@
+import sys
+
+import pytest
 from conftest import FIXTURES
 
 from yt_collector import youtube
+from yt_collector.config import load
 
 
 def test_parse_feed_fixture():
@@ -60,3 +64,10 @@ def test_read_list(tmp_path):
     f.write_text("# header\n\n  @a  \n#@b\nUCx\n")
     assert youtube.read_list(f) == ["@a", "UCx"]
     assert youtube.read_list(tmp_path / "missing.txt") == []
+
+
+def test_ytdlp_defaults_to_bundled_module(tmp_path):
+    assert youtube.ytdlp_cmd(load(tmp_path, env={})) == [sys.executable, "-m", "yt_dlp"]
+    cfg = load(tmp_path, env={"YTC_YTDLP_BIN": "no-such-yt-dlp-binary"})
+    with pytest.raises(FileNotFoundError, match="YTC_YTDLP_BIN"):
+        youtube.ytdlp_cmd(cfg)
