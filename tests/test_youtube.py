@@ -30,7 +30,7 @@ def test_resolve_channel_id_passthrough_and_cache(monkeypatch):
 
     def fake_fetch(url, timeout=20):
         calls.append(url)
-        return '..."channelId":"UCBBBBBBBBBBBBBBBBBBBBBB"...'
+        return '<link rel="canonical" href="https://www.youtube.com/channel/UCBBBBBBBBBBBBBBBBBBBBBB">'
 
     monkeypatch.setattr(youtube, "fetch", fake_fetch)
     cache = {}
@@ -38,6 +38,20 @@ def test_resolve_channel_id_passthrough_and_cache(monkeypatch):
     assert youtube.resolve_channel("@someone", cache) == "UCBBBBBBBBBBBBBBBBBBBBBB"
     assert youtube.resolve_channel("@someone", cache) == "UCBBBBBBBBBBBBBBBBBBBBBB"
     assert calls == ["https://www.youtube.com/@someone"]
+
+
+def test_resolve_channel_ignores_recommended_channels(monkeypatch):
+    # Real layout of @AndrejKarpathy: a featured channel's "channelId" precedes the page's own id.
+    page = ('{"channelId":"UCYO_jab_esuFRV4b17AJtAw"} ... '
+            '{"externalId":"UCXUPKJO5MZQN11PqgIvyuvQ"}')
+    monkeypatch.setattr(youtube, "fetch", lambda url, timeout=20: page)
+    assert youtube.resolve_channel("@AndrejKarpathy", {}) == "UCXUPKJO5MZQN11PqgIvyuvQ"
+
+
+def test_resolve_channel_does_not_guess_from_a_bare_channel_id(monkeypatch):
+    page = '{"channelId":"UCYO_jab_esuFRV4b17AJtAw"}'
+    monkeypatch.setattr(youtube, "fetch", lambda url, timeout=20: page)
+    assert youtube.resolve_channel("@someone", {}) is None
 
 
 def test_resolve_channel_unknown_handle(monkeypatch):

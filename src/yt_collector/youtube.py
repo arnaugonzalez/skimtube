@@ -14,7 +14,13 @@ from xml.etree import ElementTree as ET
 from . import log
 from .config import Config
 
-UC_RE = re.compile(r'"(?:channelId|externalId)"\s*:\s*"(UC[0-9A-Za-z_-]{22})"')
+# Ids that belong to the page's own channel. A bare "channelId" is not one of them: a channel page
+# also lists featured and recommended channels, and the first of those often comes first.
+OWN_ID_RES = [
+    re.compile(r'<link rel="canonical" href="https://www\.youtube\.com/channel/(UC[0-9A-Za-z_-]{22})"'),
+    re.compile(r'"externalId"\s*:\s*"(UC[0-9A-Za-z_-]{22})"'),
+    re.compile(r'<meta itemprop="identifier" content="(UC[0-9A-Za-z_-]{22})"'),
+]
 FEED_URL = "https://www.youtube.com/feeds/videos.xml?channel_id={}"
 NS = {
     "atom": "http://www.w3.org/2005/Atom",
@@ -55,13 +61,13 @@ def resolve_channel(entry: str, cache: dict[str, str]) -> str | None:
     except OSError as e:
         log(f"warning: cannot resolve {entry!r}: {e}")
         return None
-    m = UC_RE.search(page)
-    if not m:
+    cid = next((m.group(1) for r in OWN_ID_RES if (m := r.search(page))), None)
+    if not cid:
         log(f"warning: no channel id found for {entry!r} (wrong handle?)")
         return None
-    cache[entry] = m.group(1)
-    log(f"resolved {entry} -> {m.group(1)}")
-    return m.group(1)
+    cache[entry] = cid
+    log(f"resolved {entry} -> {cid}")
+    return cid
 
 
 def parse_feed(xml: str) -> list[dict]:
