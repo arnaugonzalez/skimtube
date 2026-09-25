@@ -1,6 +1,9 @@
+import re
 import subprocess
 import sys
+from pathlib import Path
 
+from yt_collector import __version__
 from yt_collector.cli import main
 
 
@@ -29,3 +32,8 @@ def test_digest_with_bad_config(tmp_path, capsys, monkeypatch):
     monkeypatch.setenv("YTC_MAX_PER_RUN", "lots")
     assert main(["-C", str(tmp_path), "digest"]) == 2
     assert "YTC_MAX_PER_RUN" in capsys.readouterr().err
+
+
+def test_version_matches_pyproject():
+    pyproject = (Path(__file__).parent.parent / "pyproject.toml").read_text()
+    assert re.search(r'^version = "([^"]+)"', pyproject, re.M).group(1) == __version__

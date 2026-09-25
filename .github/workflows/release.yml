@@ -1,0 +1,78 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:  # dry run: build and check only, nothing is published
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: tag matches pyproject version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          version=$(uv version --short)
+          test "v$version" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME != v$version"; exit 1; }
+      - run: uv sync
+      - run: uv run ruff check .
+      - run: uv run pytest
+      - run: uv build && uvx twine check dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write  # PyPI trusted publishing, no token stored in the repo
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: release notes from CHANGELOG.md
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          awk -v v="$version" '$0 ~ "^## "v" " {s=1; next} /^## / {s=0} s' CHANGELOG.md > notes.md
+          test -s notes.md || { echo "no CHANGELOG section for $version"; exit 1; }
+      - run: gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --notes-file notes.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  smoke:
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: install from PyPI in a clean environment
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          for _ in 1 2 3 4 5 6; do
+            pipx install "yt-collector==$version" && break
+            echo "not on the index yet, retrying"; sleep 30
+          done
+          yt-collector --version | grep -F "$version"
+          mkdir kb && cd kb && yt-collector init && test -f config.env

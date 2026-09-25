@@ -18,6 +18,11 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Text Processing :: Markup :: Markdown",
 ]
 dependencies = ["yt-dlp>=2024.12.13"]
@@ -25,6 +30,7 @@ dependencies = ["yt-dlp>=2024.12.13"]
 [project.urls]
 Homepage = "https://github.com/arnaugonzalez/yt-collector"
 Issues = "https://github.com/arnaugonzalez/yt-collector/issues"
+Changelog = "https://github.com/arnaugonzalez/yt-collector/blob/main/CHANGELOG.md"
 
 [project.scripts]
 yt-collector = "yt_collector.cli:main"
