@@ -73,7 +73,7 @@ def write_note(out: Path, video: dict, body: str, now: datetime) -> Path:
         "source: yt-collector\n"
         "---\n\n"
         f"# {video['title']}\n\n"
-        f"> {video['author']} · [{video['url']}]({video['url']}) · {pub}\n\n"
+        f"> {video['author']} · <{video['url']}> · {pub}\n\n"
     )
     path.write_text(front + body + "\n", encoding="utf-8")
     return path

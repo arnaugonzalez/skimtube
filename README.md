@@ -1,18 +1,51 @@
-# yt-collector
+<h1 align="center">yt-collector</h1>
 
-Turn the YouTube channels you never have time to watch into a searchable Markdown knowledge
-base for you and your agents.
+<p align="center">
+  <b>You follow 40 YouTube channels. You watch 4.<br>yt-collector reads the other 36 and leaves you notes.</b>
+</p>
 
-[![CI](https://github.com/arnaugonzalez/yt-collector/actions/workflows/ci.yml/badge.svg)](https://github.com/arnaugonzalez/yt-collector/actions/workflows/ci.yml)
-![License: MIT](https://img.shields.io/badge/license-MIT-blue)
-![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
+<p align="center">
+  <a href="https://github.com/arnaugonzalez/yt-collector/actions/workflows/ci.yml"><img src="https://github.com/arnaugonzalez/yt-collector/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT">
+  <img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+">
+</p>
 
-![A generated note, then the contradictions section of a digest](https://raw.githubusercontent.com/arnaugonzalez/yt-collector/main/docs/demo.gif)
+<p align="center">
+  <img src="docs/demo.gif" alt="yt-collector run writes one note per new video; the note, then a digest listing claims that disagree across channels" width="900">
+</p>
+
+New videos from the channels you follow become Markdown notes you can skim, `grep`, drop into
+Obsidian or hand to your coding agent. No YouTube API key, any LLM (local or hosted), one cron line.
+
+## Why
+
+I follow 68 channels, mostly about AI. I was never going to watch them all, and the one video that
+mattered each week was buried under three thumbnails of someone looking shocked. So now a
+cron job reads the subtitles for me: in four months it has written 725 notes, and every morning
+I read one digest instead of a subscriptions page. My coding agent greps the rest.
+
+Side effect: you stop seeing the shocked faces.
+
+## What it is good for
+
+- **Keeping up with a field without the videos.** A daily digest grouped by theme, with links
+  back to each video when something is worth the 20 minutes.
+- **Giving a coding agent a memory of what is new.** Notes are plain files, so `grep -ril mcp
+  knowledge-feed/` works, and so does asking Claude Code or Cursor "what did people say about X
+  this month?".
+- **Growing an Obsidian vault on autopilot.** Point `YTC_OUT` at a vault folder. Every note has
+  YAML front matter (channel, date, URL) for Dataview queries.
+- **Watching a niche or your competitors.** List their channels, add a keyword pre-filter and a
+  topic, and skip everything else. The digest flags when two channels disagree.
+- **Doing it privately and cheaply.** Run it with Ollama for $0, or pay about $0.002 per note
+  with DeepSeek.
+
+## What you get
 
 Every few hours it checks the channels you list, grabs the subtitles of new videos, and has an
 LLM write one structured note per video. Once a day it merges the recent notes into a digest,
-grouped by theme, with a section for **claims that contradict each other across sources**
-("channel A says X, channel B says the opposite, same week").
+grouped by theme, with a section for **claims that disagree across sources** ("channel A says X,
+channel B says the opposite, same week").
 
 ```
 knowledge-feed/
