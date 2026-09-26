@@ -1,3 +1,4 @@
+import json
 import re
 import subprocess
 import sys
@@ -37,3 +38,6 @@ def test_digest_with_bad_config(tmp_path, capsys, monkeypatch):
 def test_version_matches_pyproject():
     pyproject = (Path(__file__).parent.parent / "pyproject.toml").read_text()
     assert re.search(r'^version = "([^"]+)"', pyproject, re.M).group(1) == __version__
+    manifest = Path(__file__).parent.parent / "plugin/.claude-plugin/plugin.json"
+    plugin = json.loads(manifest.read_text())
+    assert plugin["version"] == __version__

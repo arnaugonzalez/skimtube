@@ -1,0 +1,18 @@
+{
+  "name": "yt-collector",
+  "owner": {
+    "name": "Arnau González",
+    "url": "https://github.com/arnaugonzalez"
+  },
+  "metadata": {
+    "description": "Search and grow a Markdown knowledge base built from the YouTube channels you follow."
+  },
+  "plugins": [
+    {
+      "name": "yt-collector",
+      "source": "./plugin",
+      "description": "Lets Claude answer from your yt-collector notes (what did channels say about X?) and run or set up the collector.",
+      "category": "productivity"
+    }
+  ]
+}

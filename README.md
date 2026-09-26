@@ -31,8 +31,8 @@ Side effect: you stop seeing the shocked faces.
 - **Keeping up with a field without the videos.** A daily digest grouped by theme, with links
   back to each video when something is worth the 20 minutes.
 - **Giving a coding agent a memory of what is new.** Notes are plain files, so `grep -ril mcp
-  knowledge-feed/` works, and so does asking Claude Code or Cursor "what did people say about X
-  this month?".
+  knowledge-feed/` works, and the [Claude Code plugin](#use-it-from-claude-code) answers "what
+  did people say about X this month?" with sources.
 - **Growing an Obsidian vault on autopilot.** Point `YTC_OUT` at a vault folder. Every note has
   YAML front matter (channel, date, URL) for Dataview queries.
 - **Watching a niche or your competitors.** List their channels, add a keyword pre-filter and a
@@ -84,6 +84,20 @@ whatever is new since the previous one. Then:
 yt-collector digest                  # merge the last 30 h of notes
 yt-collector digest --window-hours 168   # weekly
 ```
+
+## Use it from Claude Code
+
+The repo is also a Claude Code plugin. It adds a skill that finds your feed, searches it, and
+answers with the video links as sources ("what did the channels I follow say about MCP this
+month?"). It can also run or set up the collector for you.
+
+```
+/plugin marketplace add arnaugonzalez/yt-collector
+/plugin install yt-collector@yt-collector
+```
+
+Other agents (Cursor, Codex, Gemini CLI) can read the same instructions from
+[`plugin/skills/youtube-knowledge-feed/SKILL.md`](plugin/skills/youtube-knowledge-feed/SKILL.md).
 
 ## Why not…
 
