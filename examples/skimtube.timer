@@ -1,6 +1,6 @@
-# ~/.config/systemd/user/yt-collector.timer
+# ~/.config/systemd/user/skimtube.timer
 [Unit]
-Description=Run yt-collector every 6 hours
+Description=Run skimtube every 6 hours
 
 [Timer]
 OnCalendar=00/6:00

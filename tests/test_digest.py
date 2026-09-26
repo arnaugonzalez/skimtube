@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
-from yt_collector import collect, digest
-from yt_collector.config import load
+from skimtube import collect, digest
+from skimtube.config import load
 
 NOW = datetime(2026, 9, 21, 12, 0, tzinfo=timezone.utc)
 
@@ -41,6 +41,14 @@ def test_previous_digests_and_foreign_files_are_not_reingested(workdir):
     (out / "2026-09" / "handwritten.md").write_text("---\ntitle: mine\n---\nCLAIM-CLOSED\n")
     notes = digest.recent_notes(out, NOW.replace(day=20), NOW, 10)
     assert [n["url"] for n in notes] == ["https://www.youtube.com/watch?v=v1"]
+
+
+def test_notes_from_the_old_name_are_still_read(workdir):
+    out = workdir / "knowledge-feed"
+    path = make_note(out, "v1", "legacy", "x")
+    path.write_text(path.read_text().replace("source: skimtube", "source: yt-collector"))
+    notes = digest.recent_notes(out, NOW.replace(day=20), NOW, 10)
+    assert [n["title"] for n in notes] == ["legacy"]
 
 
 def test_window_and_cap(workdir):

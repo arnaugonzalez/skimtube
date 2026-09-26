@@ -71,8 +71,8 @@ jobs:
         run: |
           version=${GITHUB_REF_NAME#v}
           for _ in 1 2 3 4 5 6; do
-            pipx install "yt-collector==$version" && break
+            pipx install "skimtube==$version" && break
             echo "not on the index yet, retrying"; sleep 30
           done
-          yt-collector --version | grep -F "$version"
-          mkdir kb && cd kb && yt-collector init && test -f config.env
+          skimtube --version | grep -F "$version"
+          mkdir kb && cd kb && skimtube init && test -f config.env

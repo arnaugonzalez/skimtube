@@ -19,17 +19,17 @@ def init(workdir: Path) -> int:
         if target.exists():
             print(f"exists, left as is: {target}")
             continue
-        target.write_text(resources.files("yt_collector.templates").joinpath(name)
+        target.write_text(resources.files("skimtube.templates").joinpath(name)
                           .read_text(encoding="utf-8"), encoding="utf-8")
         print(f"created {target}")
-    print("\nNext: set YTC_LLM_MODEL in config.env, export YTC_LLM_API_KEY, "
-          "then run: yt-collector run")
+    print("\nNext: set SKIMTUBE_LLM_MODEL in config.env, export SKIMTUBE_LLM_API_KEY, "
+          "then run: skimtube run")
     return 0
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="yt-collector",
+        prog="skimtube",
         description="Turn YouTube channels into a searchable Markdown knowledge base.")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("-C", "--dir", type=Path, default=Path.cwd(),
@@ -56,7 +56,7 @@ def main(argv: list[str] | None = None) -> int:
             return collect.run(cfg)
         return digest.run(cfg, args.window_hours, args.max_notes)
     except (ConfigError, collect.StateError, FileNotFoundError) as e:
-        print(f"yt-collector: error: {e}", file=sys.stderr)
+        print(f"skimtube: error: {e}", file=sys.stderr)
         return 2
 
 

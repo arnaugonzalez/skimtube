@@ -1,13 +1,13 @@
 {
-  "name": "yt-collector",
+  "name": "skimtube",
   "version": "0.1.0",
-  "description": "Lets Claude answer from your yt-collector notes (what did channels say about X?) and run or set up the collector.",
+  "description": "Lets Claude answer from your skimtube notes (what did channels say about X?) and run or set up the collector.",
   "author": {
     "name": "Arnau González",
     "url": "https://github.com/arnaugonzalez"
   },
-  "homepage": "https://github.com/arnaugonzalez/yt-collector",
-  "repository": "https://github.com/arnaugonzalez/yt-collector",
+  "homepage": "https://github.com/arnaugonzalez/skimtube",
+  "repository": "https://github.com/arnaugonzalez/skimtube",
   "license": "MIT",
   "keywords": ["youtube", "knowledge-base", "markdown", "research", "obsidian"]
 }

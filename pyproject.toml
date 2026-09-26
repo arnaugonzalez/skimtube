@@ -3,7 +3,7 @@ requires = ["hatchling>=1.24", "hatch-fancy-pypi-readme>=24.1"]
 build-backend = "hatchling.build"
 
 [project]
-name = "yt-collector"
+name = "skimtube"
 version = "0.1.0"
 dynamic = ["readme"]
 description = "Turn the YouTube channels you never have time to watch into a searchable Markdown knowledge base for you and your agents."
@@ -28,12 +28,12 @@ classifiers = [
 dependencies = ["yt-dlp>=2024.12.13"]
 
 [project.urls]
-Homepage = "https://github.com/arnaugonzalez/yt-collector"
-Issues = "https://github.com/arnaugonzalez/yt-collector/issues"
-Changelog = "https://github.com/arnaugonzalez/yt-collector/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/arnaugonzalez/skimtube"
+Issues = "https://github.com/arnaugonzalez/skimtube/issues"
+Changelog = "https://github.com/arnaugonzalez/skimtube/blob/main/CHANGELOG.md"
 
 [project.scripts]
-yt-collector = "yt_collector.cli:main"
+skimtube = "skimtube.cli:main"
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.6"]
@@ -50,7 +50,7 @@ testpaths = ["tests"]
 addopts = "-q"
 
 [tool.ruff.lint.per-file-ignores]
-"src/yt_collector/prompts.py" = ["E501"]
+"src/skimtube/prompts.py" = ["E501"]
 
 # PyPI does not resolve relative paths: point images at the files on GitHub.
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
@@ -61,4 +61,4 @@ path = "README.md"
 
 [[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
 pattern = 'src="(docs/[^"]+)"'
-replacement = 'src="https://raw.githubusercontent.com/arnaugonzalez/yt-collector/main/\1"'
+replacement = 'src="https://raw.githubusercontent.com/arnaugonzalez/skimtube/main/\1"'

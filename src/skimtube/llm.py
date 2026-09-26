@@ -18,27 +18,27 @@ class LLMError(RuntimeError):
 
 
 def complete(cfg: Config, system: str, user: str) -> str:
-    if cfg["YTC_LLM_PROVIDER"] == "command":
+    if cfg["SKIMTUBE_LLM_PROVIDER"] == "command":
         return _command(cfg, system, user)
     return _openai(cfg, system, user)
 
 
 def _openai(cfg: Config, system: str, user: str, attempts: int = 3) -> str:
-    url = cfg["YTC_LLM_BASE_URL"].rstrip("/") + "/chat/completions"
+    url = cfg["SKIMTUBE_LLM_BASE_URL"].rstrip("/") + "/chat/completions"
     body = json.dumps({
-        "model": cfg["YTC_LLM_MODEL"],
+        "model": cfg["SKIMTUBE_LLM_MODEL"],
         "temperature": 0.2,
         "messages": [{"role": "system", "content": system},
                      {"role": "user", "content": user}],
     }).encode()
     headers = {"Content-Type": "application/json"}
-    if cfg["YTC_LLM_API_KEY"]:
-        headers["Authorization"] = f"Bearer {cfg['YTC_LLM_API_KEY']}"
+    if cfg["SKIMTUBE_LLM_API_KEY"]:
+        headers["Authorization"] = f"Bearer {cfg['SKIMTUBE_LLM_API_KEY']}"
 
     for attempt in range(1, attempts + 1):
         req = urllib.request.Request(url, data=body, headers=headers)
         try:
-            with urllib.request.urlopen(req, timeout=cfg.int("YTC_LLM_TIMEOUT")) as r:
+            with urllib.request.urlopen(req, timeout=cfg.int("SKIMTUBE_LLM_TIMEOUT")) as r:
                 data = json.loads(r.read().decode())
             break
         except urllib.error.HTTPError as e:
@@ -62,10 +62,10 @@ def _openai(cfg: Config, system: str, user: str, attempts: int = 3) -> str:
 
 
 def _command(cfg: Config, system: str, user: str) -> str:
-    cmd = shlex.split(cfg["YTC_LLM_COMMAND"])
+    cmd = shlex.split(cfg["SKIMTUBE_LLM_COMMAND"])
     try:
         r = subprocess.run(cmd, input=f"{system}\n\n---\n\n{user}", capture_output=True,
-                           text=True, timeout=cfg.int("YTC_LLM_TIMEOUT"), check=False)
+                           text=True, timeout=cfg.int("SKIMTUBE_LLM_TIMEOUT"), check=False)
     except FileNotFoundError as e:
         raise LLMError(f"LLM command not found: {cmd[0]}") from e
     except subprocess.TimeoutExpired as e:

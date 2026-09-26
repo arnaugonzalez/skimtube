@@ -1,5 +1,5 @@
 # .github/workflows/knowledge-feed.yml in a PRIVATE repo that stores your knowledge base.
-# Needs the secret YTC_LLM_API_KEY. Commit config.env and channels.txt to that repo
+# Needs the secret SKIMTUBE_LLM_API_KEY. Commit config.env and channels.txt to that repo
 # (without the key) together with state.json so runs stay idempotent.
 #
 # Caveat: YouTube often answers GitHub-hosted runners (datacenter IPs) with a bot check
@@ -16,10 +16,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uvx yt-collector run
+      - run: uvx skimtube run
         env:
-          YTC_LLM_API_KEY: ${{ secrets.YTC_LLM_API_KEY }}
+          SKIMTUBE_LLM_API_KEY: ${{ secrets.SKIMTUBE_LLM_API_KEY }}
       - run: |
-          git config user.name "yt-collector" && git config user.email "actions@users.noreply.github.com"
+          git config user.name "skimtube" && git config user.email "actions@users.noreply.github.com"
           git add knowledge-feed state.json && git commit -m "knowledge-feed: $(date -u +%F)" || true
           git push

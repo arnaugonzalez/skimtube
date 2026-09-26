@@ -1,9 +1,9 @@
 """Optional: add your YouTube subscriptions to the channel list (OAuth 2.0 loopback + PKCE).
 
 Needs a Google Cloud OAuth client of type "Desktop app", provided via
-YTC_OAUTH_CLIENT_ID / YTC_OAUTH_CLIENT_SECRET or the downloaded JSON at
-$XDG_CONFIG_HOME/yt-collector/client_secret.json. The refresh token is stored at
-$XDG_CONFIG_HOME/yt-collector/token.json (mode 0600), never in the working directory.
+SKIMTUBE_OAUTH_CLIENT_ID / SKIMTUBE_OAUTH_CLIENT_SECRET or the downloaded JSON at
+$XDG_CONFIG_HOME/skimtube/client_secret.json. The refresh token is stored at
+$XDG_CONFIG_HOME/skimtube/token.json (mode 0600), never in the working directory.
 """
 from __future__ import annotations
 
@@ -30,12 +30,12 @@ API = "https://www.googleapis.com/youtube/v3"
 
 
 def config_dir() -> Path:
-    return Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "yt-collector"
+    return Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "skimtube"
 
 
 def load_client() -> tuple[str, str] | None:
-    cid = os.environ.get("YTC_OAUTH_CLIENT_ID")
-    csec = os.environ.get("YTC_OAUTH_CLIENT_SECRET")
+    cid = os.environ.get("SKIMTUBE_OAUTH_CLIENT_ID")
+    csec = os.environ.get("SKIMTUBE_OAUTH_CLIENT_SECRET")
     if cid and csec:
         return cid, csec
     client_json = config_dir() / "client_secret.json"
@@ -69,7 +69,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.end_headers()
-        self.wfile.write(b"<h2>yt-collector authorized.</h2><p>You can close this tab.</p>")
+        self.wfile.write(b"<h2>skimtube authorized.</h2><p>You can close this tab.</p>")
 
     def log_message(self, *args):
         pass
@@ -78,7 +78,8 @@ class _Handler(http.server.BaseHTTPRequestHandler):
 def authorize() -> int:
     client = load_client()
     if not client:
-        print("Missing OAuth client: set YTC_OAUTH_CLIENT_ID and YTC_OAUTH_CLIENT_SECRET, "
+        print("Missing OAuth client: set SKIMTUBE_OAUTH_CLIENT_ID and "
+              "SKIMTUBE_OAUTH_CLIENT_SECRET, "
               f"or save the downloaded JSON as {config_dir() / 'client_secret.json'}",
               file=sys.stderr)
         return 1
@@ -141,7 +142,7 @@ def subscription_channel_ids() -> list[str]:
             if not page:
                 return ids
     except urllib.error.HTTPError as e:
-        hint = " (refresh token expired? run: yt-collector auth)" if e.code in (400, 401) else ""
+        hint = " (refresh token expired? run: skimtube auth)" if e.code in (400, 401) else ""
         log(f"warning: subscriptions API failed with HTTP {e.code}{hint}; "
             "using the channels file only")
     except (urllib.error.URLError, KeyError) as e:

@@ -4,4 +4,4 @@ __version__ = "0.1.0"
 
 
 def log(msg: str) -> None:
-    print(f"[yt-collector] {msg}", flush=True)
+    print(f"[skimtube] {msg}", flush=True)

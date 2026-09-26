@@ -3,8 +3,8 @@ import sys
 import pytest
 from conftest import FIXTURES
 
-from yt_collector import youtube
-from yt_collector.config import load
+from skimtube import youtube
+from skimtube.config import load
 
 
 def test_parse_feed_fixture():
@@ -82,6 +82,6 @@ def test_read_list(tmp_path):
 
 def test_ytdlp_defaults_to_bundled_module(tmp_path):
     assert youtube.ytdlp_cmd(load(tmp_path, env={})) == [sys.executable, "-m", "yt_dlp"]
-    cfg = load(tmp_path, env={"YTC_YTDLP_BIN": "no-such-yt-dlp-binary"})
-    with pytest.raises(FileNotFoundError, match="YTC_YTDLP_BIN"):
+    cfg = load(tmp_path, env={"SKIMTUBE_YTDLP_BIN": "no-such-yt-dlp-binary"})
+    with pytest.raises(FileNotFoundError, match="SKIMTUBE_YTDLP_BIN"):
         youtube.ytdlp_cmd(cfg)

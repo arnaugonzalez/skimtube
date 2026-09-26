@@ -1,5 +1,5 @@
 {
-  "name": "yt-collector",
+  "name": "skimtube",
   "owner": {
     "name": "Arnau González",
     "url": "https://github.com/arnaugonzalez"
@@ -9,9 +9,9 @@
   },
   "plugins": [
     {
-      "name": "yt-collector",
+      "name": "skimtube",
       "source": "./plugin",
-      "description": "Lets Claude answer from your yt-collector notes (what did channels say about X?) and run or set up the collector.",
+      "description": "Lets Claude answer from your skimtube notes (what did channels say about X?) and run or set up the collector.",
       "category": "productivity"
     }
   ]

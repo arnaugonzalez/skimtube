@@ -6,8 +6,8 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import pytest
 from conftest import FAKE_LLM
 
-from yt_collector import llm
-from yt_collector.config import load
+from skimtube import llm
+from skimtube.config import load
 
 
 @pytest.fixture
@@ -40,13 +40,13 @@ def ok(text):
 
 
 def cfg_for(tmp_path, url, **extra):
-    return load(tmp_path, env={"YTC_LLM_BASE_URL": url, "YTC_LLM_MODEL": "m", **extra})
+    return load(tmp_path, env={"SKIMTUBE_LLM_BASE_URL": url, "SKIMTUBE_LLM_MODEL": "m", **extra})
 
 
 def test_openai_success_sends_model_messages_and_key(tmp_path, server):
     url, script, received = server
     script.append(ok("  ## TL;DR\n- x  "))
-    out = llm.complete(cfg_for(tmp_path, url, YTC_LLM_API_KEY="secret"), "sys", "user")
+    out = llm.complete(cfg_for(tmp_path, url, SKIMTUBE_LLM_API_KEY="secret"), "sys", "user")
     assert out == "## TL;DR\n- x"
     req = received[0]
     assert req["path"] == "/v1/chat/completions"
@@ -93,19 +93,19 @@ def test_openai_unreachable(tmp_path, monkeypatch):
 
 
 def test_command_provider(tmp_path):
-    cfg = load(tmp_path, env={"YTC_LLM_PROVIDER": "command", "YTC_LLM_COMMAND": FAKE_LLM})
+    cfg = load(tmp_path, env={"SKIMTUBE_LLM_PROVIDER": "command", "SKIMTUBE_LLM_COMMAND": FAKE_LLM})
     assert llm.complete(cfg, "system", "a video about models").startswith("## TL;DR")
 
 
 def test_command_provider_failures(tmp_path):
-    cfg = load(tmp_path, env={"YTC_LLM_PROVIDER": "command", "YTC_LLM_COMMAND": FAKE_LLM})
+    cfg = load(tmp_path, env={"SKIMTUBE_LLM_PROVIDER": "command", "SKIMTUBE_LLM_COMMAND": FAKE_LLM})
     with pytest.raises(llm.LLMError, match="exited 1"):
         llm.complete(cfg, "s", "FAIL please")
-    cfg = load(tmp_path, env={"YTC_LLM_PROVIDER": "command",
-                              "YTC_LLM_COMMAND": "definitely-not-a-binary-xyz"})
+    cfg = load(tmp_path, env={"SKIMTUBE_LLM_PROVIDER": "command",
+                              "SKIMTUBE_LLM_COMMAND": "definitely-not-a-binary-xyz"})
     with pytest.raises(llm.LLMError, match="not found"):
         llm.complete(cfg, "s", "u")
-    cfg = load(tmp_path, env={"YTC_LLM_PROVIDER": "command",
-                              "YTC_LLM_COMMAND": f"{sys.executable} -c pass"})
+    cfg = load(tmp_path, env={"SKIMTUBE_LLM_PROVIDER": "command",
+                              "SKIMTUBE_LLM_COMMAND": f"{sys.executable} -c pass"})
     with pytest.raises(llm.LLMError, match="empty"):
         llm.complete(cfg, "s", "u")

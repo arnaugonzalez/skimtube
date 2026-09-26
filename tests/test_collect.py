@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 import pytest
 from conftest import FIXTURES
 
-from yt_collector import collect, youtube
-from yt_collector.config import load
+from skimtube import collect, youtube
+from skimtube.config import load
 
 NOW = datetime(2026, 9, 21, 12, 0, tzinfo=timezone.utc)
 TRANSCRIPT = "a long transcript about a new open model and its benchmark results " * 10
@@ -36,7 +36,7 @@ def test_first_run_writes_note_with_front_matter(workdir, offline):
     assert text.startswith('---\ntitle: "New open LLM beats GPT on reasoning"\n')
     assert "video_id: vidAI000001\n" in text
     assert "collected: 2026-09-21T12:00:00+00:00\n" in text
-    assert "source: yt-collector\n---" in text
+    assert "source: skimtube\n---" in text
     assert "## TL;DR" in text
     index = (out / "INDEX.md").read_text()
     assert index.count("vidAI000001") == 2  # note link + video link
@@ -59,7 +59,7 @@ def test_keyword_prefilter_skips_llm(workdir, offline, monkeypatch):
     real = collect.llm.complete
     monkeypatch.setattr(collect.llm, "complete",
                         lambda cfg, s, u: calls.append(u) or real(cfg, s, u))
-    cfg = load(workdir, env={"YTC_KEYWORDS": "llm, agents"})
+    cfg = load(workdir, env={"SKIMTUBE_KEYWORDS": "llm, agents"})
     collect.run(cfg, now=NOW)
     assert len(calls) == 1 and "New open LLM" in calls[0]
 
@@ -99,7 +99,7 @@ def test_blocklist(workdir, offline):
 
 
 def test_max_per_run_keeps_the_rest_for_later(workdir, offline):
-    cfg = load(workdir, env={"YTC_MAX_PER_RUN": "1"})
+    cfg = load(workdir, env={"SKIMTUBE_MAX_PER_RUN": "1"})
     collect.run(cfg, now=NOW)
     state = json.loads((workdir / "state.json").read_text())
     assert "vidCOOK0002" not in state["seen"]  # older candidate deferred, not dropped

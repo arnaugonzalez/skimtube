@@ -31,7 +31,7 @@ NS = {
 
 def fetch(url: str, timeout: int = 20) -> str:
     req = urllib.request.Request(url, headers={
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) yt-collector",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) skimtube",
         "Accept-Language": "en",
     })
     with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -121,12 +121,12 @@ def vtt_to_text(vtt: str) -> str:
 def ytdlp_cmd(cfg: Config) -> list[str]:
     """yt-dlp is a dependency, so by default run the copy installed next to this package:
     pipx/uv tool installs do not put dependency scripts on PATH."""
-    if not cfg["YTC_YTDLP_BIN"]:
+    if not cfg["SKIMTUBE_YTDLP_BIN"]:
         return [sys.executable, "-m", "yt_dlp"]
-    found = shutil.which(cfg["YTC_YTDLP_BIN"])
+    found = shutil.which(cfg["SKIMTUBE_YTDLP_BIN"])
     if not found:
-        raise FileNotFoundError(f"yt-dlp not found ({cfg['YTC_YTDLP_BIN']!r}); "
-                                "fix YTC_YTDLP_BIN or leave it empty to use the bundled one")
+        raise FileNotFoundError(f"yt-dlp not found ({cfg['SKIMTUBE_YTDLP_BIN']!r}); "
+                                "fix SKIMTUBE_YTDLP_BIN or leave it empty to use the bundled one")
     return [found]
 
 
@@ -134,8 +134,8 @@ def transcript(cfg: Config, video_url: str) -> str:
     """Subtitles tried one language at a time: requesting several at once lets a 429
     on an auto-translated track abort all of them."""
     base = ytdlp_cmd(cfg)
-    cap = cfg.int("YTC_MAX_TRANSCRIPT_CHARS")
-    for lang in cfg.list("YTC_SUB_LANGS"):
+    cap = cfg.int("SKIMTUBE_MAX_TRANSCRIPT_CHARS")
+    for lang in cfg.list("SKIMTUBE_SUB_LANGS"):
         with tempfile.TemporaryDirectory() as td:
             cmd = [*base, "--skip-download", "--no-warnings",
                    "--write-subs", "--write-auto-subs", "--sub-langs", lang,

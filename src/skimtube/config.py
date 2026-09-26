@@ -7,28 +7,28 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 DEFAULTS: dict[str, str] = {
-    "YTC_OUT": "knowledge-feed",
-    "YTC_CHANNELS": "channels.txt",
-    "YTC_BLOCKLIST": "blocklist.txt",
-    "YTC_STATE": "state.json",
-    "YTC_SUB_LANGS": "en,en-orig,en-US",
-    "YTC_LOOKBACK_HOURS": "24",
-    "YTC_MAX_PER_RUN": "25",
-    "YTC_MAX_TRANSCRIPT_CHARS": "48000",
-    "YTC_KEYWORDS": "",
-    "YTC_TOPIC": "technology and AI",
-    "YTC_SUMMARY_LANG": "English",
-    "YTC_LLM_PROVIDER": "openai",
-    "YTC_LLM_BASE_URL": "https://api.openai.com/v1",
-    "YTC_LLM_API_KEY": "",
-    "YTC_LLM_MODEL": "",
-    "YTC_LLM_COMMAND": "",
-    "YTC_LLM_TIMEOUT": "300",
-    "YTC_YTDLP_BIN": "",
+    "SKIMTUBE_OUT": "knowledge-feed",
+    "SKIMTUBE_CHANNELS": "channels.txt",
+    "SKIMTUBE_BLOCKLIST": "blocklist.txt",
+    "SKIMTUBE_STATE": "state.json",
+    "SKIMTUBE_SUB_LANGS": "en,en-orig,en-US",
+    "SKIMTUBE_LOOKBACK_HOURS": "24",
+    "SKIMTUBE_MAX_PER_RUN": "25",
+    "SKIMTUBE_MAX_TRANSCRIPT_CHARS": "48000",
+    "SKIMTUBE_KEYWORDS": "",
+    "SKIMTUBE_TOPIC": "technology and AI",
+    "SKIMTUBE_SUMMARY_LANG": "English",
+    "SKIMTUBE_LLM_PROVIDER": "openai",
+    "SKIMTUBE_LLM_BASE_URL": "https://api.openai.com/v1",
+    "SKIMTUBE_LLM_API_KEY": "",
+    "SKIMTUBE_LLM_MODEL": "",
+    "SKIMTUBE_LLM_COMMAND": "",
+    "SKIMTUBE_LLM_TIMEOUT": "300",
+    "SKIMTUBE_YTDLP_BIN": "",
 }
 
-INT_KEYS = ("YTC_MAX_PER_RUN", "YTC_MAX_TRANSCRIPT_CHARS", "YTC_LLM_TIMEOUT")
-FLOAT_KEYS = ("YTC_LOOKBACK_HOURS",)
+INT_KEYS = ("SKIMTUBE_MAX_PER_RUN", "SKIMTUBE_MAX_TRANSCRIPT_CHARS", "SKIMTUBE_LLM_TIMEOUT")
+FLOAT_KEYS = ("SKIMTUBE_LOOKBACK_HOURS",)
 PROVIDERS = ("openai", "command")
 
 
@@ -75,7 +75,7 @@ def config_file(workdir: Path) -> Path | None:
     if local.exists():
         return local
     xdg = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    user = xdg / "yt-collector" / "config.env"
+    user = xdg / "skimtube" / "config.env"
     return user if user.exists() else None
 
 
@@ -89,8 +89,8 @@ def load(workdir: Path | None = None, env: dict[str, str] | None = None) -> Conf
     for key in DEFAULTS:
         if key in env:
             values[key] = env[key]
-    if not values["YTC_LLM_API_KEY"] and env.get("OPENAI_API_KEY"):
-        values["YTC_LLM_API_KEY"] = env["OPENAI_API_KEY"]
+    if not values["SKIMTUBE_LLM_API_KEY"] and env.get("OPENAI_API_KEY"):
+        values["SKIMTUBE_LLM_API_KEY"] = env["OPENAI_API_KEY"]
 
     for key in INT_KEYS:
         if not values[key].isdigit() or int(values[key]) == 0:
@@ -100,24 +100,24 @@ def load(workdir: Path | None = None, env: dict[str, str] | None = None) -> Conf
             float(values[key])
         except ValueError:
             raise ConfigError(f"{key} must be a number, got {values[key]!r}") from None
-    if values["YTC_LLM_PROVIDER"] not in PROVIDERS:
+    if values["SKIMTUBE_LLM_PROVIDER"] not in PROVIDERS:
         raise ConfigError(
-            f"YTC_LLM_PROVIDER must be one of {', '.join(PROVIDERS)}; "
-            f"got {values['YTC_LLM_PROVIDER']!r}")
+            f"SKIMTUBE_LLM_PROVIDER must be one of {', '.join(PROVIDERS)}; "
+            f"got {values['SKIMTUBE_LLM_PROVIDER']!r}")
     return Config(workdir=workdir, values=values)
 
 
 def check_llm(cfg: Config) -> None:
     """Fail before touching YouTube if the LLM settings cannot possibly work."""
-    if cfg["YTC_LLM_PROVIDER"] == "command":
-        if not cfg["YTC_LLM_COMMAND"]:
-            raise ConfigError("YTC_LLM_PROVIDER=command needs YTC_LLM_COMMAND "
+    if cfg["SKIMTUBE_LLM_PROVIDER"] == "command":
+        if not cfg["SKIMTUBE_LLM_COMMAND"]:
+            raise ConfigError("SKIMTUBE_LLM_PROVIDER=command needs SKIMTUBE_LLM_COMMAND "
                               "(e.g. 'claude -p' or 'llm -m gpt-4o-mini')")
         return
-    if not cfg["YTC_LLM_MODEL"]:
-        raise ConfigError("Set YTC_LLM_MODEL (e.g. 'gpt-4o-mini', "
+    if not cfg["SKIMTUBE_LLM_MODEL"]:
+        raise ConfigError("Set SKIMTUBE_LLM_MODEL (e.g. 'gpt-4o-mini', "
                           "'deepseek/deepseek-chat' on OpenRouter, 'llama3.1' on Ollama)")
-    host = urlparse(cfg["YTC_LLM_BASE_URL"]).hostname or ""
-    if not cfg["YTC_LLM_API_KEY"] and host not in ("localhost", "127.0.0.1", "::1"):
-        raise ConfigError(f"Set YTC_LLM_API_KEY for {cfg['YTC_LLM_BASE_URL']} "
+    host = urlparse(cfg["SKIMTUBE_LLM_BASE_URL"]).hostname or ""
+    if not cfg["SKIMTUBE_LLM_API_KEY"] and host not in ("localhost", "127.0.0.1", "::1"):
+        raise ConfigError(f"Set SKIMTUBE_LLM_API_KEY for {cfg['SKIMTUBE_LLM_BASE_URL']} "
                           "(only local endpoints such as Ollama work without a key)")

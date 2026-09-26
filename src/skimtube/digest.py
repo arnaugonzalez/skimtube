@@ -1,4 +1,4 @@
-"""`yt-collector digest`: merge recent notes by theme and surface contradictions between sources."""
+"""`skimtube digest`: merge recent notes by theme and surface contradictions between sources."""
 from __future__ import annotations
 
 import re
@@ -10,6 +10,8 @@ from .config import Config, check_llm
 
 NOTE_DIR_RE = re.compile(r"^(\d{4}-\d{2}|undated)$")
 CORPUS_CAP = 90_000
+# "yt-collector" was the name before 0.1.0; notes written by it are still ours.
+NOTE_SOURCES = {"skimtube", "yt-collector"}
 
 
 def section(md: str, header: str, limit: int = 1500) -> str:
@@ -41,7 +43,7 @@ def recent_notes(out: Path, since: datetime, until: datetime, cap: int) -> list[
         for path in folder.glob("*.md"):
             md = path.read_text(encoding="utf-8", errors="replace")
             fm = front_matter(md)
-            if fm.get("source") != "yt-collector":
+            if fm.get("source") not in NOTE_SOURCES:
                 continue
             try:
                 dt = datetime.fromisoformat(fm.get("collected", "").replace("Z", "+00:00"))
@@ -77,13 +79,13 @@ def build_corpus(notes: list[dict]) -> str:
 def run(cfg: Config, window_hours: float, max_notes: int, now: datetime | None = None) -> int:
     now = now or datetime.now(timezone.utc)
     check_llm(cfg)
-    out = cfg.path("YTC_OUT")
+    out = cfg.path("SKIMTUBE_OUT")
     notes = recent_notes(out, now - timedelta(hours=window_hours), now, max_notes)
     if not notes:
         log(f"digest: no notes in the last {window_hours:g}h, nothing to do")
         return 0
     log(f"digest: merging {len(notes)} note(s) from the last {window_hours:g}h")
-    system = prompts.digest_system(cfg["YTC_SUMMARY_LANG"], cfg["YTC_TOPIC"])
+    system = prompts.digest_system(cfg["SKIMTUBE_SUMMARY_LANG"], cfg["SKIMTUBE_TOPIC"])
     try:
         body = llm.complete(cfg, system, build_corpus(notes))
     except llm.LLMError as e:
