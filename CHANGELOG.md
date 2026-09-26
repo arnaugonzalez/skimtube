@@ -10,3 +10,7 @@ First public release.
 - Per-video Markdown notes with YAML front matter, `INDEX.md`, and a digest with a
   contradictions section.
 - LLM failures are retried on the next run (up to 3 times) instead of dropping the video.
+- Claude Code plugin (`/plugin marketplace add arnaugonzalez/yt-collector`) with a skill that
+  answers from your notes and cites the videos.
+- Security guidance for agent CLIs: transcripts are untrusted text, so run them with tools
+  disabled (`claude -p --tools "" --strict-mcp-config`).
