@@ -23,3 +23,6 @@ jobs:
       - name: build
         if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
         run: uv build && uvx twine check dist/*
+      - name: audit dependencies for known vulnerabilities
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
+        run: uv export --no-dev --no-hashes --no-emit-project -o requirements.txt && uvx pip-audit -r requirements.txt

@@ -132,7 +132,7 @@ Values come from `config.env` in the working directory (or `-C DIR`), else
 | `YTC_LLM_BASE_URL` | `https://api.openai.com/v1` | any OpenAI-compatible endpoint |
 | `YTC_LLM_API_KEY` | falls back to `OPENAI_API_KEY` | not needed for localhost |
 | `YTC_LLM_MODEL` | — (required) | |
-| `YTC_LLM_PROVIDER` | `openai` | `command` pipes the prompt into `YTC_LLM_COMMAND` (e.g. `claude -p`, `llm -m …`) |
+| `YTC_LLM_PROVIDER` | `openai` | `command` pipes the prompt into `YTC_LLM_COMMAND` (e.g. `llm -m …`, or `claude -p --tools "" --strict-mcp-config`: see [Security](#security)) |
 | `YTC_SUMMARY_LANG` | `English` | language of the note content |
 | `YTC_TOPIC` | `technology and AI` | the LLM skips off-topic videos; empty = keep all |
 | `YTC_KEYWORDS` | empty | cheap whole-word pre-filter on title + description |
@@ -170,6 +170,21 @@ it: `yt-collector run && rsync -a knowledge-feed/ server:kb/`.
   model explains away in its own note.
 
 Non-goals: a web UI, a database, transcribing audio.
+
+## Security
+
+Transcripts are text written by strangers, and yt-collector hands them to an LLM. If that LLM is
+an agent CLI with tools (Claude Code, Codex, Gemini CLI…), a video can carry instructions like
+"ignore the above and run this command", and the agent may do it with your permissions. We
+reproduced this with `claude -p` in auto mode. Disable every tool for this job:
+
+```bash
+YTC_LLM_COMMAND=claude -p --tools "" --strict-mcp-config
+```
+
+HTTP providers (`YTC_LLM_PROVIDER=openai`, the default) only return text, so they can't run
+anything. yt-collector itself never runs a shell, opens a port, or sends telemetry; it talks to
+YouTube, your LLM endpoint and nothing else. See [SECURITY.md](SECURITY.md) to report issues.
 
 ## License
 
