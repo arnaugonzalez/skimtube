@@ -2,12 +2,15 @@
 from __future__ import annotations
 
 import html
+import json
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
@@ -102,6 +105,56 @@ def channel_videos(channel_id: str) -> list[dict]:
     return []
 
 
+class YtDlpError(RuntimeError):
+    """yt-dlp could not list a video or playlist."""
+
+
+class BlockedError(RuntimeError):
+    """YouTube refused the subtitles (HTTP 429 or bot check); the video may still have them."""
+
+
+def _published(info: dict) -> str:
+    """ISO timestamp from yt-dlp metadata: exact 'timestamp' if present, else 'upload_date'."""
+    if info.get("timestamp"):
+        return datetime.fromtimestamp(info["timestamp"], timezone.utc).isoformat()
+    d = info.get("upload_date") or ""
+    return f"{d[:4]}-{d[4:6]}-{d[6:8]}T00:00:00+00:00" if len(d) == 8 else ""
+
+
+def _ytdlp_json(cfg: Config, args: list[str]) -> list[dict]:
+    cmd = [*ytdlp_cmd(cfg), "--no-warnings", "--skip-download", "-J", *args]
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=300, check=False)
+    if r.returncode != 0:
+        raise YtDlpError(f"yt-dlp failed for {args[-1]}: {r.stderr.strip()[-300:]}")
+    info = json.loads(r.stdout)
+    return info.get("entries") or [info]
+
+
+def list_videos(cfg: Config, url: str, limit: int | None = None) -> list[dict]:
+    """Videos of a watch/playlist URL, in playlist order, with full metadata.
+
+    A watch URL carrying '&list=' means the playlist, as on youtube.com."""
+    if "list=" in url:
+        url = "https://www.youtube.com/playlist?list=" + re.search(r"list=([\w-]+)", url).group(1)
+    items = ["--flat-playlist"] + (["--playlist-items", f"1:{limit}"] if limit else [])
+    entries = [e for e in _ytdlp_json(cfg, [*items, url]) if e and e.get("id")]
+
+    def full(e: dict) -> dict:
+        return e if e.get("upload_date") else _ytdlp_json(
+            cfg, [f"https://www.youtube.com/watch?v={e['id']}"])[0]
+
+    with ThreadPoolExecutor(max_workers=max(1, cfg.int("SKIMTUBE_WORKERS"))) as pool:
+        infos = list(pool.map(full, entries))
+    return [{
+        "id": info["id"],
+        "title": info.get("title") or "",
+        "published": _published(info),
+        "author": info.get("channel") or info.get("uploader") or "",
+        "desc": info.get("description") or "",
+        "url": f"https://www.youtube.com/watch?v={info['id']}",
+    } for info in infos]
+
+
 def vtt_to_text(vtt: str) -> str:
     """Plain text from WebVTT, dropping timing, tags and the rolling duplicates of auto-subs."""
     lines, seen = [], set()
@@ -135,6 +188,7 @@ def transcript(cfg: Config, video_url: str) -> str:
     on an auto-translated track abort all of them."""
     base = ytdlp_cmd(cfg)
     cap = cfg.int("SKIMTUBE_MAX_TRANSCRIPT_CHARS")
+    blocked = False
     for lang in cfg.list("SKIMTUBE_SUB_LANGS"):
         with tempfile.TemporaryDirectory() as td:
             cmd = [*base, "--skip-download", "--no-warnings",
@@ -152,11 +206,15 @@ def transcript(cfg: Config, video_url: str) -> str:
             vtts = sorted(Path(td).glob("*.vtt"))
             if not vtts:
                 if "429" in r.stderr:
+                    blocked = True
                     log(f"  HTTP 429 on subtitles '{lang}', trying next language")
                 elif "confirm you" in r.stderr:
+                    blocked = True
                     log("  YouTube bot check: datacenter IPs are often blocked (see README)")
                 continue
             text = vtt_to_text(vtts[0].read_text(encoding="utf-8", errors="replace"))
             if len(text) >= 200:
                 return text[:cap]
+    if blocked:
+        raise BlockedError(video_url)
     return ""

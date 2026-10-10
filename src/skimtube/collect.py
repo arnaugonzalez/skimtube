@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -111,10 +112,9 @@ def gather_channels(cfg: Config, state: dict) -> tuple[list[str], set[str]]:
 
 
 def run(cfg: Config, now: datetime | None = None) -> int:
-    """Returns 0 on success, 1 if any LLM call failed (videos are retried next run)."""
+    """Returns 0 on success, 1 if any video failed transiently (retried next run)."""
     now = now or datetime.now(timezone.utc)
     check_llm(cfg)
-    out = cfg.path("SKIMTUBE_OUT")
     state_path = cfg.path("SKIMTUBE_STATE")
     state = load_state(state_path)
     seen = set(state["seen"])
@@ -153,41 +153,95 @@ def run(cfg: Config, now: datetime | None = None) -> int:
         candidates = candidates[-cap:]
     log(f"{len(candidates)} new video(s)" + (" (first run)" if first_run else ""))
 
-    system = prompts.note_system(cfg["SKIMTUBE_SUMMARY_LANG"], cfg["SKIMTUBE_TOPIC"])
-    written: list[tuple[dict, Path]] = []
-    llm_errors = 0
-    for v in candidates:
-        log(f"> {v['author']}: {v['title']}")
-        text = youtube.transcript(cfg, v["url"])
-        if len(text) < 200:
-            log("  no usable transcript, skipping")
-            seen.add(v["id"])
-            continue
-        user = (f"VIDEO: {v['title']}\nCHANNEL: {v['author']}\nURL: {v['url']}\n"
-                f"PUBLISHED: {v['published']}\n\nTRANSCRIPT:\n{text}\n")
-        try:
-            body = llm.complete(cfg, system, user)
-        except llm.LLMError as e:
-            llm_errors += 1
-            failures[v["id"]] = failures.get(v["id"], 0) + 1
-            log(f"  LLM error ({failures[v['id']]}/{MAX_LLM_FAILURES}): {e}")
-            if failures[v["id"]] >= MAX_LLM_FAILURES:
-                seen.add(v["id"])
-                failures.pop(v["id"])
-            continue
-        failures.pop(v["id"], None)
-        seen.add(v["id"])
-        if body.strip("` \n").startswith(prompts.SKIP_MARKER):
-            log("  off-topic, skipping")
-            continue
-        path = write_note(out, v, body, now)
-        log(f"  wrote {path.relative_to(out)}")
-        written.append((v, path))
-
-    if written:
-        update_index(out, written)
+    written, llm_errors = summarize(cfg, candidates, seen, failures, now)
     state["seen"] = sorted(seen)
     state["last_run"] = now.isoformat()
     save_state(state_path, state)
-    log(f"done: {len(written)} note(s), {llm_errors} LLM error(s), {len(seen)} ids seen")
+    log(f"done: {len(written)} note(s), {llm_errors} retryable error(s), {len(seen)} ids seen")
     return 1 if llm_errors else 0
+
+
+def _process(cfg: Config, system: str, v: dict) -> tuple[str, str]:
+    """('ok', body) | ('no-transcript', '') | ('blocked', '') | ('llm-error', message).
+
+    Touches no shared state."""
+    try:
+        text = youtube.transcript(cfg, v["url"])
+    except youtube.BlockedError:
+        return "blocked", ""
+    if len(text) < 200:
+        return "no-transcript", ""
+    user = (f"VIDEO: {v['title']}\nCHANNEL: {v['author']}\nURL: {v['url']}\n"
+            f"PUBLISHED: {v['published']}\n\nTRANSCRIPT:\n{text}\n")
+    try:
+        return "ok", llm.complete(cfg, system, user)
+    except llm.LLMError as e:
+        return "llm-error", str(e)
+
+
+def add(cfg: Config, urls: list[str], limit: int | None = None, force: bool = False,
+        now: datetime | None = None) -> int:
+    """Summarize explicit videos or playlists, bypassing keyword and lookback filters.
+
+    Already-seen videos are skipped unless force=True. Same exit codes as run()."""
+    now = now or datetime.now(timezone.utc)
+    check_llm(cfg)
+    state_path = cfg.path("SKIMTUBE_STATE")
+    state = load_state(state_path)
+    seen = set(state["seen"])
+    videos: dict[str, dict] = {}
+    for url in urls:
+        for v in youtube.list_videos(cfg, url, limit):
+            videos.setdefault(v["id"], v)
+    todo = [v for v in videos.values() if force or v["id"] not in seen]
+    log(f"{len(videos)} video(s) listed, {len(todo)} to summarize")
+    written, llm_errors = summarize(cfg, todo, seen, state["failures"], now)
+    state["seen"] = sorted(seen)
+    save_state(state_path, state)
+    log(f"done: {len(written)} note(s), {llm_errors} retryable error(s)")
+    return 1 if llm_errors else 0
+
+
+def summarize(cfg: Config, videos: list[dict], seen: set[str], failures: dict[str, int],
+              now: datetime) -> tuple[list[tuple[dict, Path]], int]:
+    """Transcript -> LLM note for each video, SKIMTUBE_WORKERS at a time; updates
+    seen/failures and INDEX.md. Returns the notes written and the number of videos left for
+    a later run (LLM errors, and subtitles blocked by YouTube)."""
+    out = cfg.path("SKIMTUBE_OUT")
+    system = prompts.note_system(cfg["SKIMTUBE_SUMMARY_LANG"], cfg["SKIMTUBE_TOPIC"])
+    written: list[tuple[dict, Path]] = []
+    llm_errors = blocked = 0
+    with ThreadPoolExecutor(max_workers=max(1, cfg.int("SKIMTUBE_WORKERS"))) as pool:
+        jobs = {pool.submit(_process, cfg, system, v): v for v in videos}
+        for job in as_completed(jobs):
+            v = jobs[job]
+            status, body = job.result()
+            log(f"> {v['author']}: {v['title']}")
+            if status == "blocked":
+                blocked += 1
+                log("  YouTube is rate-limiting subtitles; left for the next run")
+                continue
+            if status == "no-transcript":
+                log("  no usable transcript, skipping")
+                seen.add(v["id"])
+                continue
+            if status == "llm-error":
+                llm_errors += 1
+                failures[v["id"]] = failures.get(v["id"], 0) + 1
+                log(f"  LLM error ({failures[v['id']]}/{MAX_LLM_FAILURES}): {body}")
+                if failures[v["id"]] >= MAX_LLM_FAILURES:
+                    seen.add(v["id"])
+                    failures.pop(v["id"])
+                continue
+            failures.pop(v["id"], None)
+            seen.add(v["id"])
+            if body.strip("` \n").startswith(prompts.SKIP_MARKER):
+                log("  off-topic, skipping")
+                continue
+            path = write_note(out, v, body, now)
+            log(f"  wrote {path.relative_to(out)}")
+            written.append((v, path))
+
+    if written:
+        update_index(out, written)
+    return written, llm_errors + blocked

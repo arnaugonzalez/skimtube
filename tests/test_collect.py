@@ -144,3 +144,54 @@ def test_index_is_rebuilt_under_header_when_missing_header(tmp_path):
     lines = (out / "INDEX.md").read_text().splitlines()
     assert lines[:4] == collect.INDEX_HEADER
     assert "[T](2026-09/n.md)" in lines[4] and lines[5] == "- old line"
+
+
+@pytest.fixture
+def listed(monkeypatch):
+    videos = [{"id": f"vid{i}", "title": f"Video {i}", "published": "2026-09-20T10:00:00+00:00",
+               "author": "Some Channel", "desc": "", "url": f"https://www.youtube.com/watch?v=vid{i}"}
+              for i in range(3)]
+    monkeypatch.setattr(youtube, "list_videos", lambda cfg, url, limit=None: videos[:limit])
+    return videos
+
+
+def test_add_ignores_keywords_and_skips_seen(workdir, offline, listed):
+    (workdir / "config.env").write_text((workdir / "config.env").read_text()
+                                        + "SKIMTUBE_KEYWORDS=nothing-matches\n")
+    cfg = load(workdir)
+    assert collect.add(cfg, ["https://www.youtube.com/playlist?list=PLx"], limit=2, now=NOW) == 0
+    assert len(notes(workdir / "knowledge-feed")) == 2
+    assert collect.add(cfg, ["https://www.youtube.com/playlist?list=PLx"], now=NOW) == 0
+    assert len(notes(workdir / "knowledge-feed")) == 3
+    state = json.loads((workdir / "state.json").read_text())
+    assert {"vid0", "vid1", "vid2"} <= set(state["seen"])
+
+
+def test_add_force_rewrites_seen(workdir, offline, listed):
+    cfg = load(workdir)
+    collect.add(cfg, ["u"], now=NOW)
+    (workdir / "knowledge-feed" / "INDEX.md").unlink()
+    collect.add(cfg, ["u"], force=True, now=NOW)
+    index = (workdir / "knowledge-feed" / "INDEX.md").read_text()
+    assert sum(line.startswith("- ") for line in index.splitlines()) == 3
+
+
+def test_parallel_workers_give_same_notes(workdir, offline):
+    (workdir / "config.env").write_text((workdir / "config.env").read_text()
+                                        + "SKIMTUBE_WORKERS=4\n")
+    assert collect.run(load(workdir), now=NOW) == 0
+    serial = workdir.parent / "serial"
+    serial.mkdir()
+    for f in ("channels.txt", "config.env"):
+        (serial / f).write_text((workdir / f).read_text().replace("SKIMTUBE_WORKERS=4\n", ""))
+    assert collect.run(load(serial), now=NOW) == 0
+    assert notes(workdir / "knowledge-feed") == notes(serial / "knowledge-feed")
+
+
+def test_blocked_subtitles_are_retried_not_marked_seen(workdir, monkeypatch, listed):
+    def blocked(cfg, url):
+        raise youtube.BlockedError(url)
+
+    monkeypatch.setattr(youtube, "transcript", blocked)
+    assert collect.add(load(workdir), ["u"], now=NOW) == 1
+    assert json.loads((workdir / "state.json").read_text())["seen"] == []

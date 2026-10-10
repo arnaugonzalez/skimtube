@@ -155,6 +155,7 @@ Values come from `config.env` in the working directory (or `-C DIR`), else
 | `SKIMTUBE_SUB_LANGS` | `en,en-orig,en-US` | subtitle languages, tried one at a time |
 | `SKIMTUBE_LOOKBACK_HOURS` | `24` | first run only |
 | `SKIMTUBE_MAX_PER_RUN` | `25` | the rest wait for the next run |
+| `SKIMTUBE_WORKERS` | `1` | videos summarized in parallel (transcript + LLM) |
 | `SKIMTUBE_MAX_TRANSCRIPT_CHARS` | `48000` | transcript truncation |
 | `SKIMTUBE_YTDLP_BIN` | empty = the bundled yt-dlp | set to use another yt-dlp binary |
 
@@ -169,6 +170,10 @@ re-run `auth` when the log says so.
 `run` and `digest` are plain idempotent commands. See [`examples/`](examples/) for cron, a
 systemd user timer, and a GitHub Actions workflow. To publish the feed somewhere else, chain
 it: `skimtube run && rsync -a knowledge-feed/ server:kb/`.
+
+To summarize a playlist or a few videos right away, outside the channel feed:
+`skimtube add 'https://www.youtube.com/playlist?list=PL...' -n 30`. Videos already in the
+knowledge base are skipped unless you pass `--force`.
 
 ## Limits
 

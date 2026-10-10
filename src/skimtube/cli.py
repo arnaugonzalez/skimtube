@@ -6,7 +6,7 @@ import sys
 from importlib import resources
 from pathlib import Path
 
-from . import __version__, collect, digest, oauth
+from . import __version__, collect, digest, oauth, youtube
 from .config import ConfigError, load
 
 TEMPLATES = ("config.env", "channels.txt", "blocklist.txt")
@@ -38,6 +38,12 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("init", help="create config.env, channels.txt and blocklist.txt")
     sub.add_parser("run", help="summarize new videos into notes (idempotent; schedule it)")
+    p_add = sub.add_parser("add", help="summarize specific videos or playlists now")
+    p_add.add_argument("urls", nargs="+", help="video or playlist URLs")
+    p_add.add_argument("-n", "--limit", type=int,
+                       help="only the first N videos of each playlist")
+    p_add.add_argument("--force", action="store_true",
+                       help="summarize again videos already in the knowledge base")
     p_digest = sub.add_parser("digest", help="merge recent notes by theme, with contradictions")
     p_digest.add_argument("--window-hours", type=float, default=30,
                           help="notes collected in this window (default: 30)")
@@ -54,8 +60,11 @@ def main(argv: list[str] | None = None) -> int:
         cfg = load(args.dir)
         if args.command == "run":
             return collect.run(cfg)
+        if args.command == "add":
+            return collect.add(cfg, args.urls, args.limit, args.force)
         return digest.run(cfg, args.window_hours, args.max_notes)
-    except (ConfigError, collect.StateError, FileNotFoundError) as e:
+    except (ConfigError, collect.StateError, FileNotFoundError,
+            youtube.YtDlpError) as e:
         print(f"skimtube: error: {e}", file=sys.stderr)
         return 2
 

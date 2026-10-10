@@ -85,3 +85,41 @@ def test_ytdlp_defaults_to_bundled_module(tmp_path):
     cfg = load(tmp_path, env={"SKIMTUBE_YTDLP_BIN": "no-such-yt-dlp-binary"})
     with pytest.raises(FileNotFoundError, match="SKIMTUBE_YTDLP_BIN"):
         youtube.ytdlp_cmd(cfg)
+
+
+def test_published_prefers_timestamp_then_upload_date():
+    assert youtube._published({"timestamp": 0, "upload_date": "20260101"}).startswith("2026-01-01")
+    assert youtube._published({"timestamp": 1760000000}).startswith("2025-10-09")
+    assert youtube._published({}) == ""
+
+
+def test_list_videos_turns_watch_url_with_list_into_playlist(monkeypatch, tmp_path):
+    calls = []
+
+    def fake(cfg, args):
+        calls.append(args)
+        return [{"id": "abc", "title": "T", "upload_date": "20261001", "channel": "C"}]
+
+    monkeypatch.setattr(youtube, "_ytdlp_json", fake)
+    vs = youtube.list_videos(load(tmp_path),
+                             "https://www.youtube.com/watch?v=abc&list=PL_x-1&pp=z", 5)
+    assert calls[0][-1] == "https://www.youtube.com/playlist?list=PL_x-1"
+    assert "1:5" in calls[0]
+    assert vs[0]["published"].startswith("2026-10-01") and vs[0]["author"] == "C"
+
+
+def test_transcript_raises_blocked_on_429(monkeypatch, tmp_path):
+    class R:
+        returncode, stderr = 1, "ERROR: HTTP Error 429: Too Many Requests"
+
+    monkeypatch.setattr(youtube.subprocess, "run", lambda *a, **k: R())
+    with pytest.raises(youtube.BlockedError):
+        youtube.transcript(load(tmp_path), "https://www.youtube.com/watch?v=x")
+
+
+def test_transcript_without_subtitles_returns_empty(monkeypatch, tmp_path):
+    class R:
+        returncode, stderr = 0, ""
+
+    monkeypatch.setattr(youtube.subprocess, "run", lambda *a, **k: R())
+    assert youtube.transcript(load(tmp_path), "https://www.youtube.com/watch?v=x") == ""
