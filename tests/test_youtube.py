@@ -108,6 +108,24 @@ def test_list_videos_turns_watch_url_with_list_into_playlist(monkeypatch, tmp_pa
     assert vs[0]["published"].startswith("2026-10-01") and vs[0]["author"] == "C"
 
 
+def test_list_videos_skips_seen_before_fetching_and_survives_failures(monkeypatch, tmp_path):
+    fetched = []
+
+    def fake(cfg, args):
+        if "--flat-playlist" in args:
+            return [{"id": "seen1"}, {"id": "bad"}, {"id": "new1"}]
+        fetched.append(args[-1])
+        if args[-1].endswith("bad"):
+            raise youtube.YtDlpError("yt-dlp failed: Sign in to confirm")
+        return [{"id": "new1", "title": "N", "upload_date": "20261015"}]
+
+    monkeypatch.setattr(youtube, "_ytdlp_json", fake)
+    vs = youtube.list_videos(load(tmp_path), "https://www.youtube.com/playlist?list=PLx",
+                             skip={"seen1"})
+    assert [v["id"] for v in vs] == ["new1"]
+    assert not any(u.endswith("seen1") for u in fetched)
+
+
 def test_transcript_raises_blocked_on_429(monkeypatch, tmp_path):
     class R:
         returncode, stderr = 1, "ERROR: HTTP Error 429: Too Many Requests"

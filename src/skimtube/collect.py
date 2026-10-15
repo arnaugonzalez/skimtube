@@ -191,7 +191,7 @@ def add(cfg: Config, urls: list[str], limit: int | None = None, force: bool = Fa
     seen = set(state["seen"])
     videos: dict[str, dict] = {}
     for url in urls:
-        for v in youtube.list_videos(cfg, url, limit):
+        for v in youtube.list_videos(cfg, url, limit, skip=set() if force else seen):
             videos.setdefault(v["id"], v)
     todo = [v for v in videos.values() if force or v["id"] not in seen]
     log(f"{len(videos)} video(s) listed, {len(todo)} to summarize")

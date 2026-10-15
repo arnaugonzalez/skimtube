@@ -151,7 +151,8 @@ def listed(monkeypatch):
     videos = [{"id": f"vid{i}", "title": f"Video {i}", "published": "2026-09-20T10:00:00+00:00",
                "author": "Some Channel", "desc": "", "url": f"https://www.youtube.com/watch?v=vid{i}"}
               for i in range(3)]
-    monkeypatch.setattr(youtube, "list_videos", lambda cfg, url, limit=None: videos[:limit])
+    monkeypatch.setattr(youtube, "list_videos", lambda cfg, url, limit=None, skip=frozenset():
+                        [v for v in videos[:limit] if v["id"] not in skip])
     return videos
 
 

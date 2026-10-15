@@ -130,21 +130,30 @@ def _ytdlp_json(cfg: Config, args: list[str]) -> list[dict]:
     return info.get("entries") or [info]
 
 
-def list_videos(cfg: Config, url: str, limit: int | None = None) -> list[dict]:
+def list_videos(cfg: Config, url: str, limit: int | None = None,
+                skip: set[str] | frozenset[str] = frozenset()) -> list[dict]:
     """Videos of a watch/playlist URL, in playlist order, with full metadata.
 
-    A watch URL carrying '&list=' means the playlist, as on youtube.com."""
+    A watch URL carrying '&list=' means the playlist, as on youtube.com. Ids in `skip` are
+    dropped before fetching metadata; a video whose metadata fails (private, sign-in) is
+    logged and left out instead of aborting the whole playlist."""
     if "list=" in url:
         url = "https://www.youtube.com/playlist?list=" + re.search(r"list=([\w-]+)", url).group(1)
     items = ["--flat-playlist"] + (["--playlist-items", f"1:{limit}"] if limit else [])
-    entries = [e for e in _ytdlp_json(cfg, [*items, url]) if e and e.get("id")]
+    entries = [e for e in _ytdlp_json(cfg, [*items, url])
+               if e and e.get("id") and e["id"] not in skip]
 
-    def full(e: dict) -> dict:
-        return e if e.get("upload_date") else _ytdlp_json(
-            cfg, [f"https://www.youtube.com/watch?v={e['id']}"])[0]
+    def full(e: dict) -> dict | None:
+        if e.get("upload_date"):
+            return e
+        try:
+            return _ytdlp_json(cfg, [f"https://www.youtube.com/watch?v={e['id']}"])[0]
+        except YtDlpError as err:
+            log(f"skip {e['id']}: {err}")
+            return None
 
     with ThreadPoolExecutor(max_workers=max(1, cfg.int("SKIMTUBE_WORKERS"))) as pool:
-        infos = list(pool.map(full, entries))
+        infos = [i for i in pool.map(full, entries) if i]
     return [{
         "id": info["id"],
         "title": info.get("title") or "",
