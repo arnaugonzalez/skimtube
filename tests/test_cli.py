@@ -41,3 +41,11 @@ def test_version_matches_pyproject():
     manifest = Path(__file__).parent.parent / "plugin/.claude-plugin/plugin.json"
     plugin = json.loads(manifest.read_text())
     assert plugin["version"] == __version__
+
+
+def test_plugin_pins_the_released_version():
+    plugin_dir = Path(__file__).parent.parent / "plugin"
+    for doc in (plugin_dir / "skills/youtube-knowledge-feed/SKILL.md", plugin_dir / "README.md"):
+        pins = re.findall(r"skimtube==([0-9][^\s`]*)", doc.read_text())
+        assert pins, f"{doc.name} has no pinned skimtube version"
+        assert set(pins) == {__version__}, doc.name

@@ -68,7 +68,7 @@ or `SKIMTUBE_LLM_BASE_URL=http://localhost:11434/v1` for Ollama. It exits 1 if s
 ## Set it up
 
 ```bash
-pipx install skimtube
+pipx install skimtube==0.2.1
 mkdir kb && cd kb && skimtube init   # writes config.env, channels.txt, blocklist.txt
 ```
 
