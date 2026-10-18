@@ -123,7 +123,10 @@ def _published(info: dict) -> str:
 
 def _ytdlp_json(cfg: Config, args: list[str]) -> list[dict]:
     cmd = [*ytdlp_cmd(cfg), "--no-warnings", "--skip-download", "-J", *args]
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=300, check=False)
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=300, check=False)
+    except subprocess.TimeoutExpired as e:
+        raise YtDlpError(f"yt-dlp timed out after {e.timeout:g}s for {args[-1]}") from e
     if r.returncode != 0:
         raise YtDlpError(f"yt-dlp failed for {args[-1]}: {r.stderr.strip()[-300:]}")
     info = json.loads(r.stdout)

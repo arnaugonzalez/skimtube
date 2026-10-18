@@ -1,3 +1,5 @@
+import json
+import subprocess
 import sys
 
 import pytest
@@ -124,6 +126,21 @@ def test_list_videos_skips_seen_before_fetching_and_survives_failures(monkeypatc
                              skip={"seen1"})
     assert [v["id"] for v in vs] == ["new1"]
     assert not any(u.endswith("seen1") for u in fetched)
+
+
+def test_list_videos_survives_a_metadata_timeout(monkeypatch, tmp_path):
+    def fake_run(cmd, **kw):
+        if "--flat-playlist" in cmd:
+            return subprocess.CompletedProcess(cmd, 0, json.dumps(
+                {"entries": [{"id": "slow"}, {"id": "ok"}]}), "")
+        if cmd[-1].endswith("slow"):
+            raise subprocess.TimeoutExpired(cmd, 300)
+        return subprocess.CompletedProcess(cmd, 0, json.dumps(
+            {"id": "ok", "title": "O", "upload_date": "20261015"}), "")
+
+    monkeypatch.setattr(youtube.subprocess, "run", fake_run)
+    vs = youtube.list_videos(load(tmp_path), "https://www.youtube.com/playlist?list=PLx")
+    assert [v["id"] for v in vs] == ["ok"]
 
 
 def test_transcript_raises_blocked_on_429(monkeypatch, tmp_path):

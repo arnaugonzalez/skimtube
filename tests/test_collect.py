@@ -177,6 +177,22 @@ def test_add_force_rewrites_seen(workdir, offline, listed):
     assert sum(line.startswith("- ") for line in index.splitlines()) == 3
 
 
+def test_add_passes_seen_ids_to_listing_unless_forced(workdir, offline, monkeypatch):
+    skips = []
+
+    def fake(cfg, url, limit=None, skip=frozenset()):
+        skips.append(set(skip))
+        return []
+
+    monkeypatch.setattr(youtube, "list_videos", fake)
+    state = workdir / "state.json"
+    state.write_text(json.dumps({"seen": ["old1"], "failures": {}}))
+    cfg = load(workdir)
+    collect.add(cfg, ["u"], now=NOW)
+    collect.add(cfg, ["u"], force=True, now=NOW)
+    assert skips == [{"old1"}, set()]
+
+
 def test_parallel_workers_give_same_notes(workdir, offline):
     (workdir / "config.env").write_text((workdir / "config.env").read_text()
                                         + "SKIMTUBE_WORKERS=4\n")
