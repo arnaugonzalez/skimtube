@@ -1,6 +1,6 @@
 {
   "name": "skimtube",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Lets Claude answer from your skimtube notes (what did channels say about X?) and run or set up the collector.",
   "author": {
     "name": "Arnau González",

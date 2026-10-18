@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "skimtube"
-version = "0.2.0"
+version = "0.2.1"
 dynamic = ["readme"]
 description = "Turn the YouTube channels you never have time to watch into a searchable Markdown knowledge base for you and your agents."
 license = "MIT"

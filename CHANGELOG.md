@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.1 — 2026-10-18
+
+`skimtube add` on a long playlist no longer fails because of one bad video.
+
+### Fixed
+- `skimtube add` skips videos already in your knowledge base before fetching their metadata,
+  so re-adding a playlist only asks YouTube about the new ones.
+- A playlist video whose metadata fails (private, members-only, sign-in required, or a yt-dlp
+  timeout) is logged and left out instead of aborting the whole playlist.
+
+### Maintenance
+- CI and release workflows move to `actions/checkout@v7`, `actions/setup-python@v7`,
+  `astral-sh/setup-uv@v7`, `actions/upload-artifact@v7` and `actions/download-artifact@v8`
+  (Node 24 runtime); ruff 0.16.9.
+- Dependabot groups its updates into one PR for GitHub Actions and one for Python.
+
 ## 0.2.0 — 2026-10-10
 
 Summarize a playlist, not just your channels, and survive YouTube's rate limits.
