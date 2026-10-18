@@ -97,7 +97,23 @@ month?"). It can also run or set up the collector for you.
 ```
 
 Other agents (Cursor, Codex, Gemini CLI) can read the same instructions from
-[`plugin/skills/youtube-knowledge-feed/SKILL.md`](plugin/skills/youtube-knowledge-feed/SKILL.md).
+[`plugin/skills/youtube-knowledge-feed/SKILL.md`](plugin/skills/youtube-knowledge-feed/SKILL.md),
+or install the skill with:
+
+```bash
+npx skills add arnaugonzalez/skimtube
+```
+
+## Install from your agent
+
+Paste this into Claude Code, Codex or Cursor:
+
+> Install skimtube 0.2.1 with `pipx install skimtube==0.2.1` and check `skimtube --version`.
+> In a new folder `kb`, run `skimtube init`, then ask me which YouTube channels to add to
+> `channels.txt` and which LLM to use (a hosted OpenAI-compatible API key, or Ollama with
+> `num_ctx` of at least 16384). Never set `SKIMTUBE_LLM_COMMAND` to an agent CLI with tools
+> enabled. Run `skimtube run`, then show me the first 20 lines of `knowledge-feed/INDEX.md`.
+> Stop and ask before writing outside `kb`.
 
 ## Why not…
 

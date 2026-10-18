@@ -10,6 +10,14 @@
 - A playlist video whose metadata fails (private, members-only, sign-in required, or a yt-dlp
   timeout) is logged and left out instead of aborting the whole playlist.
 
+### Plugin
+- `plugin/` now carries its own README and LICENSE, as the Claude plugin directory requires.
+  The README says what the skill reads, runs and sends.
+- The skill installs `skimtube==0.2.1` instead of the latest release, so its instructions match
+  the CLI it sets up. A test fails if the pin and `__version__` drift apart.
+- The README adds an "Install from your agent" prompt and `npx skills add arnaugonzalez/skimtube`
+  for agents that read skills.
+
 ### Maintenance
 - CI and release workflows move to `actions/checkout@v7`, `actions/setup-python@v7`,
   `astral-sh/setup-uv@v7`, `actions/upload-artifact@v7` and `actions/download-artifact@v8`
