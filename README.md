@@ -1,3 +1,5 @@
+<img src="docs/social-preview.jpg" alt="skimtube: you follow 40 YouTube channels and watch 4; skimtube reads the other 36 and leaves you Markdown notes" width="100%">
+
 <h1 align="center">skimtube</h1>
 
 <p align="center">
@@ -8,10 +10,6 @@
   <a href="https://github.com/arnaugonzalez/skimtube/actions/workflows/ci.yml"><img src="https://github.com/arnaugonzalez/skimtube/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT">
   <img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+">
-</p>
-
-<p align="center">
-  <img src="docs/demo.gif" alt="skimtube run writes one note per new video; the note, then a digest listing claims that disagree across channels" width="900">
 </p>
 
 New videos from the channels you follow become Markdown notes you can skim, `grep`, drop into
@@ -56,6 +54,10 @@ knowledge-feed/
     └── 2026-09-20_some-channel_new-open-model-beats-gpt_abc123.md
 ```
 
+**Using an AI agent?** Point Claude Code, Codex, Cursor or Gemini CLI at this repo:
+[AGENTS.md](https://github.com/arnaugonzalez/skimtube/blob/main/AGENTS.md) tells it how to install
+skimtube, pick your channels and LLM, and run it for you.
+
 ## Quickstart
 
 ```bash
@@ -84,6 +86,17 @@ whatever is new since the previous one. Then:
 skimtube digest                  # merge the last 30 h of notes
 skimtube digest --window-hours 168   # weekly
 ```
+
+## Example: two talks on LLMs, one two-minute read
+
+<img src="docs/demo.gif" alt="skimtube add on two public videos (Andrej Karpathy's Intro to Large Language Models and 3Blue1Brown's Transformers chapter) writes one note each; the TL;DR of the first note; then skimtube digest merges both into themes, contradictions, weak signals and sources" width="100%">
+
+An hour-long Karpathy talk and a 27-minute 3Blue1Brown chapter: 1h40 of video. `skimtube add`
+reads their subtitles and has an LLM write one note per video; here the LLM is Claude Haiku
+through `claude -p` with every tool disabled (see [Security](#security)). The TL;DR is the top of
+one note. `skimtube digest` then merges the notes by theme, with a section for claims that
+disagree (none here: the two talks agree). Real run, about a minute of waiting cut, recorded
+with [vhs](https://github.com/charmbracelet/vhs).
 
 ## Use it from Claude Code
 

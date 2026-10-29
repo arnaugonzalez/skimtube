@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2 — unreleased
+
+- README: social preview on top; new narrated demo in an "Example" section; AGENTS.md for coding agents.
+
 ## 0.2.1 — 2026-10-18
 
 `skimtube add` on a long playlist no longer fails because of one bad video.
